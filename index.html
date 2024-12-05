@@ -8,6 +8,7 @@
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         .highcharts-figure, .highcharts-data-table table {
             min-width: 320px;
@@ -24,7 +25,7 @@
     <figure class="highcharts-figure">
         <div id="container"></div>
         <p class="highcharts-description">
-            Live chart displaying temperature and humidity data from JSON file.
+            Live chart displaying temperature and humidity data from CSV file.
         </p>
         <button id="exportButton">Export to Excel</button>
     </figure>
@@ -80,31 +81,33 @@
             }]
         });
 
-        // Data buffer to store all data points
-        const dataBuffer = [];
-
-        // Function to fetch JSON data and update the chart
+        // Function to fetch and parse CSV data
         function fetchDataAndUpdateChart() {
-            fetch('data_clean.json')
-                .then(response => response.json())
-                .then(jsonData => {
-                    jsonData.forEach(record => {
-                        const time = new Date(record.Datetime).getTime();
-                        const temperature = record['Temperature (°C)'];
-                        const humidity = record['Humidity (%)'];
+            // Use the raw URL to get the CSV file directly
+            fetch('https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv')
+                .then(response => response.text()) // Read the file as text
+                .then(csvText => {
+                    // Parse CSV using PapaParse
+                    Papa.parse(csvText, {
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            const jsonData = results.data;
 
-                        // Check if the data point is already added
-                        if (!dataBuffer.some(data => data.time === time)) {
-                            // Add new data to the buffer
-                            dataBuffer.push({ time, temperature, humidity });
+                            jsonData.forEach(record => {
+                                const time = new Date(record.Date + ' ' + record.Time).getTime(); // Convert to timestamp
+                                const temperature = record['Temperature (°C)'];
+                                const humidity = record['Humidity (%)'];
 
-                            // Add points to the chart
-                            chart.series[0].addPoint([time, temperature], true, true);
-                            chart.series[1].addPoint([time, humidity], true, true);
+                                // Add points to the chart
+                                chart.series[0].addPoint([time, temperature], true, true);
+                                chart.series[1].addPoint([time, humidity], true, true);
+                            });
                         }
                     });
                 })
-                .catch(error => console.error('Error fetching JSON data:', error));
+                .catch(error => console.error('Error fetching or parsing CSV data:', error));
         }
 
         // Fetch data initially and set interval for updates
@@ -113,16 +116,27 @@
 
         // Export to Excel functionality
         document.getElementById('exportButton').addEventListener('click', function () {
-            const exportData = dataBuffer.map(data => ({
-                Time: new Date(data.time).toLocaleString(),
-                Temperature: data.temperature,
-                Humidity: data.humidity
-            }));
+            fetch('https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv')
+                .then(response => response.text())
+                .then(csvText => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            const exportData = results.data.map(record => ({
+                                Time: record.Date + ' ' + record.Time,
+                                Temperature: record['Temperature (°C)'],
+                                Humidity: record['Humidity (%)']
+                            }));
 
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Temperature and Humidity');
-            XLSX.writeFile(wb, 'temperature_humidity_data.xlsx');
+                            const ws = XLSX.utils.json_to_sheet(exportData);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, 'Temperature and Humidity');
+                            XLSX.writeFile(wb, 'temperature_humidity_data.xlsx');
+                        }
+                    });
+                });
         });
     </script>
 </body>
