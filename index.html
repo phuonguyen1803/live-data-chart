@@ -3,117 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Data Chart</title>
+    <title>Live Temperature and Humidity Chart</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
     <style>
-        iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
+        .highcharts-figure,
+        .highcharts-data-table table {
+            min-width: 320px;
+            max-width: 1000px;
+            margin: 1em auto;
         }
-        #chart-container {
-            display: none; /* Ẩn nội dung iframe cho đến khi được hiển thị */
+
+        #container {
+            height: 400px;
+        }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .highcharts-data-table caption {
+            padding: 1em 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .highcharts-data-table th {
+            font-weight: 600;
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table td,
+        .highcharts-data-table th,
+        .highcharts-data-table caption {
+            padding: 0.5em;
+        }
+
+        .highcharts-data-table thead tr,
+        .highcharts-data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+
+        .highcharts-data-table tr:hover {
+            background: #f1f7ff;
+        }
+
+        .cell {
+            height: 220px;
         }
     </style>
 </head>
 <body>
-    <h1>Weather Data Visualization</h1>
-
-    <!-- Container cho biểu đồ (iframe sẽ hiển thị nội dung này) -->
-    <div id="chart-container">
-        <div id="chart" style="width: 100%; height: 500px;"></div>
-    </div>
-
-    <!-- iFrame để hiển thị nội dung -->
-    <iframe id="chart-iframe"></iframe>
+    <figure class="highcharts-figure">
+        <div id="container"></div>
+        <p class="highcharts-description">
+            Chart showing temperature and humidity data from a CSV file.
+        </p>
+    </figure>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // URL đến file CSV
-            const csvUrl = 'https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv';
-
-            // Hàm khởi tạo biểu đồ
-            function createChart(data) {
-                const container = document.getElementById('chart');
-                Highcharts.chart(container, {
-                    chart: {
-                        type: 'line'
+        // Function to fetch and parse CSV data
+        async function fetchCSVData(url) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    complete: function (results) {
+                        resolve(results.data);
                     },
-                    title: {
-                        text: 'Temperature and Humidity Over Time'
-                    },
-                    xAxis: {
-                        type: 'datetime',
-                        title: {
-                            text: 'Time'
-                        }
-                    },
-                    yAxis: [{
-                        title: {
-                            text: 'Temperature (°C)'
-                        }
-                    }, {
-                        title: {
-                            text: 'Humidity (%)'
-                        },
-                        opposite: true
-                    }],
-                    series: [{
-                        name: 'Temperature (°C)',
-                        data: data.temperature,
-                        yAxis: 0
-                    }, {
-                        name: 'Humidity (%)',
-                        data: data.humidity,
-                        yAxis: 1
-                    }]
+                    error: function (error) {
+                        reject(error);
+                    }
                 });
-            }
+            });
+        }
 
-            // Đọc file CSV
-            Papa.parse(csvUrl, {
-                download: true,
-                header: true,
-                complete: function (results) {
-                    const jsonData = results.data;
-                    const temperatureData = [];
-                    const humidityData = [];
+        // Convert CSV data to Highcharts series data
+        function processData(data) {
+            const temperatureData = [];
+            const humidityData = [];
 
-                    jsonData.forEach(record => {
-                        if (record.Date && record.Time && record['Temperature (°C)'] && record['Humidity (%)']) {
-                            const time = new Date(record.Date + ' ' + record.Time).getTime();
-                            const temperature = parseFloat(record['Temperature (°C)']);
-                            const humidity = parseFloat(record['Humidity (%)']);
+            data.forEach(row => {
+                const time = new Date(row.Time).getTime(); // Parse time to timestamp
+                const temperature = parseFloat(row.Temperature);
+                const humidity = parseFloat(row.Humidity);
 
-                            temperatureData.push([time, temperature]);
-                            humidityData.push([time, humidity]);
-                        }
-                    });
+                if (!isNaN(time) && !isNaN(temperature)) {
+                    temperatureData.push([time, temperature]);
+                }
 
-                    // Tạo biểu đồ với dữ liệu đã xử lý
-                    const chartData = {
-                        temperature: temperatureData,
-                        humidity: humidityData
-                    };
-
-                    createChart(chartData);
-
-                    // Hiển thị nội dung trong iframe
-                    const iframe = document.getElementById('chart-iframe');
-                    const chartContainer = document.getElementById('chart-container');
-
-                    // Hiển thị nội dung của container trong iframe
-                    const iframeDoc = iframe.contentWindow.document;
-                    iframeDoc.open();
-                    iframeDoc.write(chartContainer.innerHTML);
-                    iframeDoc.close();
-                },
-                error: function (error) {
-                    console.error('Error loading CSV:', error);
+                if (!isNaN(time) && !isNaN(humidity)) {
+                    humidityData.push([time, humidity]);
                 }
             });
-        });
+
+            return { temperatureData, humidityData };
+        }
+
+        // Initialize the chart
+        async function initChart() {
+            const csvUrl = "https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv";
+            const rawData = await fetchCSVData(csvUrl);
+            const { temperatureData, humidityData } = processData(rawData);
+
+            Highcharts.chart('container', {
+                chart: {
+                    type: 'spline'
+                },
+
+                time: {
+                    useUTC: false
+                },
+
+                title: {
+                    text: 'Live Temperature and Humidity Data'
+                },
+
+                xAxis: {
+                    type: 'datetime',
+                    title: {
+                        text: 'Time'
+                    }
+                },
+
+                yAxis: [{
+                    title: {
+                        text: 'Temperature (°C)'
+                    },
+                    min: 0
+                }, {
+                    title: {
+                        text: 'Humidity (%)'
+                    },
+                    min: 0,
+                    opposite: true
+                }],
+
+                tooltip: {
+                    shared: true,
+                    xDateFormat: '%Y-%m-%d %H:%M:%S'
+                },
+
+                series: [
+                    {
+                        name: 'Temperature',
+                        data: temperatureData,
+                        tooltip: {
+                            valueSuffix: ' °C'
+                        },
+                        color: Highcharts.getOptions().colors[1]
+                    },
+                    {
+                        name: 'Humidity',
+                        data: humidityData,
+                        tooltip: {
+                            valueSuffix: ' %'
+                        },
+                        yAxis: 1,
+                        color: Highcharts.getOptions().colors[2]
+                    }
+                ]
+            });
+        }
+
+        initChart();
     </script>
 </body>
 </html>
