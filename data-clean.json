@@ -1,0 +1,202 @@
+[
+    {
+        "Datetime": "2024-12-05 15:00:00",
+        "Temperature (\u00b0C)": 27.62,
+        "Humidity (%)": 79
+    },
+    {
+        "Datetime": "2024-12-05 18:00:00",
+        "Temperature (\u00b0C)": 26.26,
+        "Humidity (%)": 86
+    },
+    {
+        "Datetime": "2024-12-05 21:00:00",
+        "Temperature (\u00b0C)": 24.64,
+        "Humidity (%)": 92
+    },
+    {
+        "Datetime": "2024-12-06 00:00:00",
+        "Temperature (\u00b0C)": 24.74,
+        "Humidity (%)": 89
+    },
+    {
+        "Datetime": "2024-12-06 03:00:00",
+        "Temperature (\u00b0C)": 27.25,
+        "Humidity (%)": 76
+    },
+    {
+        "Datetime": "2024-12-06 06:00:00",
+        "Temperature (\u00b0C)": 31.16,
+        "Humidity (%)": 63
+    },
+    {
+        "Datetime": "2024-12-06 09:00:00",
+        "Temperature (\u00b0C)": 30.42,
+        "Humidity (%)": 66
+    },
+    {
+        "Datetime": "2024-12-06 12:00:00",
+        "Temperature (\u00b0C)": 25.19,
+        "Humidity (%)": 89
+    },
+    {
+        "Datetime": "2024-12-06 15:00:00",
+        "Temperature (\u00b0C)": 25.07,
+        "Humidity (%)": 90
+    },
+    {
+        "Datetime": "2024-12-06 18:00:00",
+        "Temperature (\u00b0C)": 24.89,
+        "Humidity (%)": 92
+    },
+    {
+        "Datetime": "2024-12-06 21:00:00",
+        "Temperature (\u00b0C)": 24.21,
+        "Humidity (%)": 93
+    },
+    {
+        "Datetime": "2024-12-07 00:00:00",
+        "Temperature (\u00b0C)": 24.84,
+        "Humidity (%)": 87
+    },
+    {
+        "Datetime": "2024-12-07 03:00:00",
+        "Temperature (\u00b0C)": 30.15,
+        "Humidity (%)": 66
+    },
+    {
+        "Datetime": "2024-12-07 06:00:00",
+        "Temperature (\u00b0C)": 31.98,
+        "Humidity (%)": 58
+    },
+    {
+        "Datetime": "2024-12-07 09:00:00",
+        "Temperature (\u00b0C)": 30.72,
+        "Humidity (%)": 66
+    },
+    {
+        "Datetime": "2024-12-07 12:00:00",
+        "Temperature (\u00b0C)": 26.13,
+        "Humidity (%)": 89
+    },
+    {
+        "Datetime": "2024-12-07 15:00:00",
+        "Temperature (\u00b0C)": 25.25,
+        "Humidity (%)": 91
+    },
+    {
+        "Datetime": "2024-12-07 18:00:00",
+        "Temperature (\u00b0C)": 24.23,
+        "Humidity (%)": 94
+    },
+    {
+        "Datetime": "2024-12-07 21:00:00",
+        "Temperature (\u00b0C)": 23.3,
+        "Humidity (%)": 94
+    },
+    {
+        "Datetime": "2024-12-08 00:00:00",
+        "Temperature (\u00b0C)": 24.21,
+        "Humidity (%)": 88
+    },
+    {
+        "Datetime": "2024-12-08 03:00:00",
+        "Temperature (\u00b0C)": 29.17,
+        "Humidity (%)": 65
+    },
+    {
+        "Datetime": "2024-12-08 06:00:00",
+        "Temperature (\u00b0C)": 32.24,
+        "Humidity (%)": 54
+    },
+    {
+        "Datetime": "2024-12-08 09:00:00",
+        "Temperature (\u00b0C)": 28.71,
+        "Humidity (%)": 72
+    },
+    {
+        "Datetime": "2024-12-08 12:00:00",
+        "Temperature (\u00b0C)": 26.41,
+        "Humidity (%)": 84
+    },
+    {
+        "Datetime": "2024-12-08 15:00:00",
+        "Temperature (\u00b0C)": 25.09,
+        "Humidity (%)": 80
+    },
+    {
+        "Datetime": "2024-12-08 18:00:00",
+        "Temperature (\u00b0C)": 23.78,
+        "Humidity (%)": 83
+    },
+    {
+        "Datetime": "2024-12-08 21:00:00",
+        "Temperature (\u00b0C)": 23.88,
+        "Humidity (%)": 83
+    },
+    {
+        "Datetime": "2024-12-09 00:00:00",
+        "Temperature (\u00b0C)": 24.46,
+        "Humidity (%)": 81
+    },
+    {
+        "Datetime": "2024-12-09 03:00:00",
+        "Temperature (\u00b0C)": 28.81,
+        "Humidity (%)": 64
+    },
+    {
+        "Datetime": "2024-12-09 06:00:00",
+        "Temperature (\u00b0C)": 31.48,
+        "Humidity (%)": 55
+    },
+    {
+        "Datetime": "2024-12-09 09:00:00",
+        "Temperature (\u00b0C)": 31.16,
+        "Humidity (%)": 58
+    },
+    {
+        "Datetime": "2024-12-09 12:00:00",
+        "Temperature (\u00b0C)": 26.89,
+        "Humidity (%)": 74
+    },
+    {
+        "Datetime": "2024-12-09 15:00:00",
+        "Temperature (\u00b0C)": 25.61,
+        "Humidity (%)": 78
+    },
+    {
+        "Datetime": "2024-12-09 18:00:00",
+        "Temperature (\u00b0C)": 24.73,
+        "Humidity (%)": 79
+    },
+    {
+        "Datetime": "2024-12-09 21:00:00",
+        "Temperature (\u00b0C)": 23.76,
+        "Humidity (%)": 79
+    },
+    {
+        "Datetime": "2024-12-10 00:00:00",
+        "Temperature (\u00b0C)": 23.76,
+        "Humidity (%)": 76
+    },
+    {
+        "Datetime": "2024-12-10 03:00:00",
+        "Temperature (\u00b0C)": 28.68,
+        "Humidity (%)": 61
+    },
+    {
+        "Datetime": "2024-12-10 06:00:00",
+        "Temperature (\u00b0C)": 31.92,
+        "Humidity (%)": 53
+    },
+    {
+        "Datetime": "2024-12-10 09:00:00",
+        "Temperature (\u00b0C)": 31.88,
+        "Humidity (%)": 52
+    },
+    {
+        "Datetime": "2024-12-10 12:00:00",
+        "Temperature (\u00b0C)": 26.15,
+        "Humidity (%)": 80
+    }
+]
