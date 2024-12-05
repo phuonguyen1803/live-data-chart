@@ -3,140 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Temperature and Humidity Data Chart</title>
+    <title>Weather Data Chart</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <style>
-        .highcharts-figure, .highcharts-data-table table {
-            min-width: 320px;
-            max-width: 1000px;
-            margin: 1em auto;
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
         }
-
-        #container {
-            height: 400px;
+        #chart-container {
+            display: none; /* Ẩn nội dung iframe cho đến khi được hiển thị */
         }
     </style>
 </head>
 <body>
-    <figure class="highcharts-figure">
-        <div id="container"></div>
-        <p class="highcharts-description">
-            Live chart displaying temperature and humidity data from CSV file.
-        </p>
-        <button id="exportButton">Export to Excel</button>
-    </figure>
+    <h1>Weather Data Visualization</h1>
+
+    <!-- Container cho biểu đồ (iframe sẽ hiển thị nội dung này) -->
+    <div id="chart-container">
+        <div id="chart" style="width: 100%; height: 500px;"></div>
+    </div>
+
+    <!-- iFrame để hiển thị nội dung -->
+    <iframe id="chart-iframe"></iframe>
 
     <script>
-        // Initialize the Highcharts chart
-        const chart = Highcharts.chart('container', {
-            chart: {
-                type: 'spline',
-                animation: Highcharts.svg, // Make it animated
-            },
-            time: {
-                useUTC: false
-            },
-            title: {
-                text: 'Live Temperature and Humidity Data'
-            },
-            xAxis: {
-                type: 'datetime',
-                title: {
-                    text: 'Time'
-                }
-            },
-            yAxis: [{
-                title: {
-                    text: 'Temperature (°C)'
-                },
-                min: 0,
-                max: 50,
-                tickInterval: 5
-            }, {
-                title: {
-                    text: 'Humidity (%)'
-                },
-                opposite: true,
-                min: 0,
-                max: 100,
-                tickInterval: 10
-            }],
-            tooltip: {
-                shared: true,
-                crosshairs: true,
-                headerFormat: '<b>{point.key}</b><br/>',
-                pointFormat: '<span style="color:{series.color}">{series.name}</span>: {point.y:.2f}<br/>'
-            },
-            series: [{
-                name: 'Temperature (°C)',
-                data: []
-            }, {
-                name: 'Humidity (%)',
-                data: [],
-                yAxis: 1
-            }]
-        });
+        document.addEventListener('DOMContentLoaded', function () {
+            // URL đến file CSV
+            const csvUrl = 'https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv';
 
-        // Function to fetch and parse CSV data
-        function fetchDataAndUpdateChart() {
-            // Use the raw URL to get the CSV file directly
-            fetch('https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv')
-                .then(response => response.text()) // Read the file as text
-                .then(csvText => {
-                    // Parse CSV using PapaParse
-                    Papa.parse(csvText, {
-                        header: true,
-                        dynamicTyping: true,
-                        skipEmptyLines: true,
-                        complete: function(results) {
-                            const jsonData = results.data;
-
-                            jsonData.forEach(record => {
-                                const time = new Date(record.Date + ' ' + record.Time).getTime(); // Convert to timestamp
-                                const temperature = record['Temperature (°C)'];
-                                const humidity = record['Humidity (%)'];
-
-                                // Add points to the chart
-                                chart.series[0].addPoint([time, temperature], true, true);
-                                chart.series[1].addPoint([time, humidity], true, true);
-                            });
+            // Hàm khởi tạo biểu đồ
+            function createChart(data) {
+                const container = document.getElementById('chart');
+                Highcharts.chart(container, {
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Temperature and Humidity Over Time'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        title: {
+                            text: 'Time'
                         }
-                    });
-                })
-                .catch(error => console.error('Error fetching or parsing CSV data:', error));
-        }
-
-        // Fetch data initially and set interval for updates
-        fetchDataAndUpdateChart();
-        setInterval(fetchDataAndUpdateChart, 5000); // Fetch every 5 seconds
-
-        // Export to Excel functionality
-        document.getElementById('exportButton').addEventListener('click', function () {
-            fetch('https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv')
-                .then(response => response.text())
-                .then(csvText => {
-                    Papa.parse(csvText, {
-                        header: true,
-                        dynamicTyping: true,
-                        skipEmptyLines: true,
-                        complete: function(results) {
-                            const exportData = results.data.map(record => ({
-                                Time: record.Date + ' ' + record.Time,
-                                Temperature: record['Temperature (°C)'],
-                                Humidity: record['Humidity (%)']
-                            }));
-
-                            const ws = XLSX.utils.json_to_sheet(exportData);
-                            const wb = XLSX.utils.book_new();
-                            XLSX.utils.book_append_sheet(wb, ws, 'Temperature and Humidity');
-                            XLSX.writeFile(wb, 'temperature_humidity_data.xlsx');
+                    },
+                    yAxis: [{
+                        title: {
+                            text: 'Temperature (°C)'
                         }
-                    });
+                    }, {
+                        title: {
+                            text: 'Humidity (%)'
+                        },
+                        opposite: true
+                    }],
+                    series: [{
+                        name: 'Temperature (°C)',
+                        data: data.temperature,
+                        yAxis: 0
+                    }, {
+                        name: 'Humidity (%)',
+                        data: data.humidity,
+                        yAxis: 1
+                    }]
                 });
+            }
+
+            // Đọc file CSV
+            Papa.parse(csvUrl, {
+                download: true,
+                header: true,
+                complete: function (results) {
+                    const jsonData = results.data;
+                    const temperatureData = [];
+                    const humidityData = [];
+
+                    jsonData.forEach(record => {
+                        if (record.Date && record.Time && record['Temperature (°C)'] && record['Humidity (%)']) {
+                            const time = new Date(record.Date + ' ' + record.Time).getTime();
+                            const temperature = parseFloat(record['Temperature (°C)']);
+                            const humidity = parseFloat(record['Humidity (%)']);
+
+                            temperatureData.push([time, temperature]);
+                            humidityData.push([time, humidity]);
+                        }
+                    });
+
+                    // Tạo biểu đồ với dữ liệu đã xử lý
+                    const chartData = {
+                        temperature: temperatureData,
+                        humidity: humidityData
+                    };
+
+                    createChart(chartData);
+
+                    // Hiển thị nội dung trong iframe
+                    const iframe = document.getElementById('chart-iframe');
+                    const chartContainer = document.getElementById('chart-container');
+
+                    // Hiển thị nội dung của container trong iframe
+                    const iframeDoc = iframe.contentWindow.document;
+                    iframeDoc.open();
+                    iframeDoc.write(chartContainer.innerHTML);
+                    iframeDoc.close();
+                },
+                error: function (error) {
+                    console.error('Error loading CSV:', error);
+                }
+            });
         });
     </script>
 </body>
