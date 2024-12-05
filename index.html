@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Temperature and Humidity Data Chart</title>
+    <title>Live Temperature and Humidity Chart</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        .highcharts-figure, .highcharts-data-table table {
+        .highcharts-figure,
+        .highcharts-data-table table {
             min-width: 320px;
             max-width: 1000px;
             margin: 1em auto;
@@ -18,33 +20,48 @@
         #container {
             height: 400px;
         }
+
+        .highcharts-data-table table {
+            font-family: Verdana, sans-serif;
+            border-collapse: collapse;
+            border: 1px solid #ebebeb;
+            margin: 10px auto;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
     </style>
 </head>
 <body>
     <figure class="highcharts-figure">
         <div id="container"></div>
         <p class="highcharts-description">
-            Live chart displaying temperature and humidity data from JSON file.
+            Chart showing temperature and humidity data updating dynamically.
         </p>
-        <button id="exportButton">Export to Excel</button>
     </figure>
 
     <script>
-        // Load data from the JSON file
-        fetch('data_clean.json')
-            .then(response => response.json())
-            .then(jsonData => {
-                // Process JSON data
+        // Fetch data from CSV
+        const csvUrl = 'https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv';
+
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: function (results) {
+                // Process the data
                 const temperatureData = [];
                 const humidityData = [];
 
-                jsonData.forEach(record => {
-                    const time = new Date(record.Datetime).getTime(); // Convert to timestamp
-                    temperatureData.push([time, record['Temperature (°C)']]);
-                    humidityData.push([time, record['Humidity (%)']]);
+                results.data.forEach(row => {
+                    if (row.Date && row.Time && row['Temperature (°C)'] && row['Humidity (%)']) {
+                        const timestamp = new Date(`${row.Date}T${row.Time}`).getTime();
+                        temperatureData.push([timestamp, row['Temperature (°C)']]);
+                        humidityData.push([timestamp, row['Humidity (%)']]);
+                    }
                 });
 
-                // Initialize the Highcharts chart
+                // Initialize Highcharts
                 Highcharts.chart('container', {
                     chart: {
                         type: 'spline'
@@ -65,27 +82,28 @@
                         title: {
                             text: 'Temperature (°C)'
                         },
-                        min: 0,
-                        max: 50,
-                        tickInterval: 5
+                        min: 0
                     }, {
                         title: {
                             text: 'Humidity (%)'
                         },
                         opposite: true,
                         min: 0,
-                        max: 100,
-                        tickInterval: 10
+                        max: 100
                     }],
                     tooltip: {
                         shared: true,
-                        crosshairs: true,
-                        headerFormat: '<b>{point.key}</b><br/>',
-                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: {point.y:.2f}<br/>'
+                        crosshairs: true
+                    },
+                    legend: {
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'middle'
                     },
                     series: [{
                         name: 'Temperature (°C)',
                         data: temperatureData,
+                        color: '#FF5733',
                         tooltip: {
                             valueSuffix: ' °C'
                         }
@@ -93,27 +111,14 @@
                         name: 'Humidity (%)',
                         data: humidityData,
                         yAxis: 1,
+                        color: '#337DFF',
                         tooltip: {
                             valueSuffix: ' %'
                         }
                     }]
                 });
-
-                // Export to Excel functionality
-                document.getElementById('exportButton').addEventListener('click', function () {
-                    const combinedData = jsonData.map(record => ({
-                        Time: record.Datetime,
-                        Temperature: record['Temperature (°C)'],
-                        Humidity: record['Humidity (%)']
-                    }));
-
-                    const ws = XLSX.utils.json_to_sheet(combinedData);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Temperature and Humidity');
-                    XLSX.writeFile(wb, 'temperature_humidity_data.xlsx');
-                });
-            })
-            .catch(error => console.error('Error loading JSON data:', error));
+            }
+        });
     </script>
 </body>
 </html>
