@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Temperature and Humidity Chart</title>
+    <title>Live Temperature & Humidity Chart</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <style>
         .highcharts-figure,
         .highcharts-data-table table {
@@ -31,34 +32,22 @@
             max-width: 500px;
         }
 
-        .highcharts-data-table caption {
-            padding: 1em 0;
-            font-size: 1.2em;
-            color: #555;
-        }
-
         .highcharts-data-table th {
             font-weight: 600;
             padding: 0.5em;
         }
 
         .highcharts-data-table td,
-        .highcharts-data-table th,
-        .highcharts-data-table caption {
+        .highcharts-data-table th {
             padding: 0.5em;
         }
 
-        .highcharts-data-table thead tr,
         .highcharts-data-table tr:nth-child(even) {
             background: #f8f8f8;
         }
 
         .highcharts-data-table tr:hover {
-            background: #f1f7ff;
-        }
-
-        .cell {
-            height: 220px;
+            background: #a8c0ff;
         }
     </style>
 </head>
@@ -66,116 +55,205 @@
     <figure class="highcharts-figure">
         <div id="container"></div>
         <p class="highcharts-description">
-            Chart showing temperature and humidity data from a CSV file.
+            Biểu đồ hiển thị dữ liệu độ ẩm và nhiệt độ cập nhật mỗi giờ.
         </p>
+        <button id="exportButton">Xuất ra Excel</button>
     </figure>
 
     <script>
-        // Function to fetch and parse CSV data
-        async function fetchCSVData(url) {
-            return new Promise((resolve, reject) => {
-                Papa.parse(url, {
-                    download: true,
-                    header: true,
-                    complete: function (results) {
-                        resolve(results.data);
-                    },
-                    error: function (error) {
-                        reject(error);
+        let humidityValue = 0; // Giá trị mặc định của độ ẩm
+        let temperatureValue = 0; // Giá trị mặc định của nhiệt độ
+        const dataBuffer = [];
+
+        // Cập nhật giá trị độ ẩm và nhiệt độ
+        const updateValues = (newHumidity, newTemperature) => {
+            humidityValue = newHumidity;
+            temperatureValue = newTemperature;
+        };
+
+        const onChartLoad = function () {
+            const chart = this,
+                humiditySeries = chart.series[0],
+                temperatureSeries = chart.series[1];
+
+            setInterval(function () {
+                const x = (new Date()).getTime();
+
+                humiditySeries.addPoint([x, humidityValue], true, true);
+                temperatureSeries.addPoint([x, temperatureValue], true, true);
+
+                dataBuffer.push({
+                    time: x,
+                    humidity: humidityValue,
+                    temperature: temperatureValue
+                });
+            }, 3600000); // Cập nhật mỗi giờ (3600000ms)
+        };
+
+        const initialData = (function () {
+            const data = [];
+            const time = (new Date().getTime());
+
+            for (let i = -23; i <= 0; i += 1) {  // Điều chỉnh thời gian mỗi giờ
+                data.push({
+                    x: time + i * 3600000,  // Mỗi điểm là 1 giờ (3600000ms)
+                    y: 0 // Giá trị mặc định
+                });
+            }
+            return data;
+        }());
+
+        Highcharts.chart('container', {
+            chart: {
+                type: 'areaspline',
+                events: {
+                    load: onChartLoad
+                }
+            },
+
+            time: {
+                useUTC: false
+            },
+
+            title: {
+                text: 'Live Temperature & Humidity Data'
+            },
+
+            xAxis: {
+                type: 'datetime',
+                tickPixelInterval: 150
+            },
+
+            yAxis: [{
+                title: {
+                    text: 'Độ ẩm (%)'
+                },
+                min: 0,
+                max: 100,
+                tickInterval: 10
+            }, {
+                title: {
+                    text: 'Nhiệt độ (°C)'
+                },
+                opposite: true,
+                min: -10,
+                max: 50
+            }],
+
+            tooltip: {
+                shared: true
+            },
+
+            series: [
+                {
+                    name: 'Độ ẩm',
+                    data: initialData.map(point => point),
+                    color: Highcharts.getOptions().colors[0]
+                },
+                {
+                    name: 'Nhiệt độ',
+                    data: initialData.map(point => point),
+                    color: Highcharts.getOptions().colors[1],
+                    yAxis: 1
+                }
+            ]
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const csvData = e.target.result;
+                const rows = csvData.split('\n'); // Tách từng dòng
+                const data = [];
+
+                rows.forEach((row, index) => {
+                    const columns = row.split(','); // Tách từng cột bằng dấu phẩy
+                    if (index === 0) {
+                        // Kiểm tra xem các cột có đúng định dạng không
+                        if (columns[0].trim() !== 'Time' || columns[1].trim() !== 'Temperature' || columns[2].trim() !== 'Humidity') {
+                            console.error('File CSV không đúng định dạng. Cần có các cột: Time, Temperature, Humidity.');
+                        }
+                    } else {
+                        // Thêm dữ liệu vào mảng
+                        data.push({
+                            time: columns[0].trim(),
+                            temperature: parseFloat(columns[1].trim()),
+                            humidity: parseFloat(columns[2].trim())
+                        });
                     }
                 });
-            });
-        }
 
-        // Convert CSV data to Highcharts series data
-        function processData(data) {
-            const temperatureData = [];
-            const humidityData = [];
+                console.log(data);
+            };
 
-            data.forEach(row => {
-                const time = new Date(row.Time).getTime(); // Parse time to timestamp
-                const temperature = parseFloat(row.Temperature);
-                const humidity = parseFloat(row.Humidity);
+            reader.readAsText(file);
+        });
+    const csvUrl = "https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv";
 
-                if (!isNaN(time) && !isNaN(temperature)) {
-                    temperatureData.push([time, temperature]);
+    function fetchCSVData() {
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true,
+            complete: function (results) {
+                console.log("CSV Data:", results);  // Kiểm tra xem dữ liệu có được tải về thành công không
+                const parsedData = results.data;
+                if (parsedData.length === 0) {
+                    console.error("No data found in the CSV file");
+                    return;
                 }
 
-                if (!isNaN(time) && !isNaN(humidity)) {
-                    humidityData.push([time, humidity]);
-                }
-            });
+                const dataBuffer = [];
+                parsedData.forEach(row => {
+                    // Kết hợp 'Date' và 'Time' thành chuỗi datetime hợp lệ
+                    const timeString = row.Date + " " + row.Time;
+                    const validDate = new Date(timeString); // Tạo đối tượng Date hợp lệ
 
-            return { temperatureData, humidityData };
-        }
-
-        // Initialize the chart
-        async function initChart() {
-            const csvUrl = "https://raw.githubusercontent.com/phuonguyen1803/live-data-chart/main/hourly_weather_data.csv";
-            const rawData = await fetchCSVData(csvUrl);
-            const { temperatureData, humidityData } = processData(rawData);
-
-            Highcharts.chart('container', {
-                chart: {
-                    type: 'spline'
-                },
-
-                time: {
-                    useUTC: false
-                },
-
-                title: {
-                    text: 'Live Temperature and Humidity Data'
-                },
-
-                xAxis: {
-                    type: 'datetime',
-                    title: {
-                        text: 'Time'
+                    // Kiểm tra tính hợp lệ của thời gian
+                    if (isNaN(validDate.getTime())) {
+                        console.error("Invalid Date:", timeString);  // In lỗi nếu có lỗi về ngày giờ
+                        return;  // Bỏ qua dòng dữ liệu này
                     }
-                },
 
-                yAxis: [{
-                    title: {
-                        text: 'Temperature (°C)'
-                    },
-                    min: 0
-                }, {
-                    title: {
-                        text: 'Humidity (%)'
-                    },
-                    min: 0,
-                    opposite: true
-                }],
+                    const timestamp = validDate.getTime();  // Lấy timestamp (milisecond)
 
-                tooltip: {
-                    shared: true,
-                    xDateFormat: '%Y-%m-%d %H:%M:%S'
-                },
+                    // Kiểm tra giá trị nhiệt độ và độ ẩm
+                    const humidity = parseFloat(row["Humidity (%)"]);
+                    const temperature = parseFloat(row["Temperature (°C)"]);
 
-                series: [
-                    {
-                        name: 'Temperature',
-                        data: temperatureData,
-                        tooltip: {
-                            valueSuffix: ' °C'
-                        },
-                        color: Highcharts.getOptions().colors[1]
-                    },
-                    {
-                        name: 'Humidity',
-                        data: humidityData,
-                        tooltip: {
-                            valueSuffix: ' %'
-                        },
-                        yAxis: 1,
-                        color: Highcharts.getOptions().colors[2]
+                    // Nếu giá trị nhiệt độ hoặc độ ẩm không hợp lệ, bỏ qua dòng này
+                    if (isNaN(humidity) || isNaN(temperature)) {
+                        console.error("Invalid Humidity or Temperature values at time:", timeString);
+                        return;  // Bỏ qua dòng dữ liệu này
                     }
-                ]
-            });
-        }
 
-        initChart();
+                    // In ra các giá trị đã được xử lý để kiểm tra
+                    console.log("Processed Data:", { time: timestamp, humidity, temperature });
+
+                    // Nếu tất cả giá trị hợp lệ, thêm vào dataBuffer
+                    dataBuffer.push({ time: timestamp, humidity, temperature });
+
+                    // Lấy biểu đồ hiện tại
+                    const chart = Highcharts.charts[0];
+                    const humiditySeries = chart.series[0];
+                    const temperatureSeries = chart.series[1];
+
+                    // Thêm điểm dữ liệu vào biểu đồ
+                    humiditySeries.addPoint([timestamp, humidity], true, false);
+                    temperatureSeries.addPoint([timestamp, temperature], true, false);
+                });
+            },
+            error: function (err) {
+                console.error("Error loading CSV data:", err);  // In lỗi nếu có
+            }
+        });
+    }
+
+    window.onload = function () {
+        fetchCSVData();
+    };
+
     </script>
 </body>
 </html>
